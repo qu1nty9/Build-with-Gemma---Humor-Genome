@@ -25,10 +25,9 @@ dev = [
 humor-genome = "app.cli:main"
 
 [tool.setuptools.packages.find]
-include = ["app*"]
+include = ["app*", "evaluation*"]
 
 [tool.pytest.ini_options]
 addopts = "-q"
 testpaths = ["tests"]
 asyncio_mode = "auto"
-

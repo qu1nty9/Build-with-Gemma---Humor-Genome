@@ -19,3 +19,13 @@ Each output row records:
 
 Generated results should only be committed after the model, prompt version, runtime, and sampling configuration have been frozen.
 
+Compare the analysis stage across the interactive and benchmark models:
+
+```bash
+.venv/bin/python evaluation/compare_models.py \
+  --models gemma4:e2b gemma4:12b \
+  --input evaluation/examples.jsonl \
+  --output evaluation/results/model-comparison.jsonl
+```
+
+The script reports latency and Jaccard agreement between the sets of detected comedy mechanisms. Agreement is a diagnostic, not a ground-truth humor metric.

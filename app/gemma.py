@@ -24,6 +24,10 @@ class GemmaError(RuntimeError):
     """Raised when Gemma inference or validation fails."""
 
 
+class GemmaQualityError(GemmaError):
+    """Raised when Gemma cannot satisfy a semantic output invariant after repair."""
+
+
 class OllamaGemmaGateway:
     def __init__(self, settings: Settings) -> None:
         self.model_name = settings.gemma_model
@@ -123,4 +127,7 @@ class OllamaGemmaGateway:
             try:
                 return schema.model_validate_json(self._extract_json(repaired))
             except ValidationError as second_error:
+                messages = " ".join(error["msg"] for error in second_error.errors())
+                if "one-gene self-check" in messages or "requested target_gene" in messages:
+                    raise GemmaQualityError(messages) from second_error
                 raise GemmaError(f"Gemma returned invalid structured output after repair: {second_error}") from second_error

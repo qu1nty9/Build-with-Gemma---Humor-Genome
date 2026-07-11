@@ -2,7 +2,7 @@ import httpx
 
 import app.api as api_module
 from app.api import app
-from app.gemma import GemmaError
+from app.gemma import GemmaError, GemmaQualityError
 from app.pipeline import PipelineQualityError
 
 
@@ -51,3 +51,13 @@ async def test_quality_failure_is_actionable(monkeypatch) -> None:
     assert response.status_code == 422
     assert "different gene" in response.json()["detail"]
     assert "whole premise" not in response.text
+
+
+async def test_gateway_quality_failure_uses_same_actionable_response(monkeypatch) -> None:
+    async def fail(_request):
+        raise GemmaQualityError("one-gene self-check failed")
+
+    monkeypatch.setattr(api_module.pipeline, "analyze", fail)
+    response = await request("POST", "/v1/analyze", json={"text": "A valid short joke."})
+    assert response.status_code == 422
+    assert "isolate that comedy gene" in response.json()["detail"]

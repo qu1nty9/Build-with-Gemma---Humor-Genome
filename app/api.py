@@ -8,7 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
-from app.gemma import GemmaError, OllamaGemmaGateway
+from app.gemma import GemmaError, GemmaQualityError, OllamaGemmaGateway
 from app.pipeline import HumorGenomePipeline, PipelineQualityError
 from app.schemas import (
     AnalyzeRequest,
@@ -41,17 +41,17 @@ async def health() -> dict[str, str]:
 async def _run(operation):
     try:
         return await operation
+    except (GemmaQualityError, PipelineQualityError) as exc:
+        logger.info("Controlled mutation failed quality gates: %s", exc)
+        raise HTTPException(
+            status_code=422,
+            detail="Gemma could not isolate that comedy gene reliably. Try a different gene or revise the source material.",
+        ) from exc
     except GemmaError as exc:
         logger.warning("Gemma operation failed: %s", exc)
         raise HTTPException(
             status_code=503,
             detail="Gemma is not ready for this run yet. Check that the configured model is installed and try again.",
-        ) from exc
-    except PipelineQualityError as exc:
-        logger.info("Controlled mutation failed quality gates: %s", exc)
-        raise HTTPException(
-            status_code=422,
-            detail="Gemma could not isolate that comedy gene reliably. Try a different gene or revise the source material.",
         ) from exc
 
 
