@@ -29,3 +29,14 @@ Compare the analysis stage across the interactive and benchmark models:
 ```
 
 The script reports latency and Jaccard agreement between the sets of detected comedy mechanisms. Agreement is a diagnostic, not a ground-truth humor metric.
+
+Create a machine-readable summary and a table ready for the Kaggle write-up:
+
+```bash
+.venv/bin/python evaluation/summarize_results.py \
+  --input evaluation/results/gemma4-e2b-full.jsonl \
+  --output-json evaluation/reports/summary.json \
+  --output-md evaluation/reports/summary.md
+```
+
+The summary reports completion rate, controlled-mutation pass rate, variant self-check rate, p50/p95 latency, per-stage latency, target-gene coverage, and dataset-license coverage. It deliberately does not treat model agreement or self-assessment as a measure of whether a joke is funny; blind human A/B preference is a separate evaluation layer.

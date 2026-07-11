@@ -38,6 +38,8 @@ async def run() -> None:
                 "id": example["id"],
                 "model": settings.gemma_model,
                 "target_gene": example["target_gene"],
+                "source": example.get("source"),
+                "license": example.get("license"),
             }
             try:
                 result = await pipeline.flow(
