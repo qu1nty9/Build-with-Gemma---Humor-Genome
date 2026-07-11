@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Edit one comedy gene at a time with Gemma.">
+    <title>Humor Genome Lab</title>
+    <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="/static/styles.css">
+  </head>
+  <body>
+    <div class="noise" aria-hidden="true"></div>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Humor Genome Lab home">
+        <span class="brand-mark">HG</span>
+        <span>Humor Genome Lab</span>
+      </a>
+      <div class="model-badge"><span class="status-dot"></span> Local Gemma 4</div>
+    </header>
+
+    <main>
+      <section class="hero">
+        <p class="eyebrow">CONTROLLED COMEDY EDITING</p>
+        <h1>Change one gene.<br><span>Keep the joke yours.</span></h1>
+        <p class="lede">Map the mechanism, edit one variable, then compare the result without pretending humor is objective.</p>
+      </section>
+
+      <section class="workspace" aria-label="Humor editing workspace">
+        <form id="lab-form" class="input-panel">
+          <div class="panel-heading">
+            <span class="step-number">01</span>
+            <div>
+              <h2>Bring a joke</h2>
+              <p>Short material works best for controlled edits.</p>
+            </div>
+          </div>
+
+          <label for="joke-input">Your material</label>
+          <textarea id="joke-input" name="text" maxlength="4000" required>My smart fridge sends me health tips. Mostly it recommends I stop opening the fridge.</textarea>
+          <div class="field-meta"><span id="character-count">91 / 4000</span><span>Text-first prototype</span></div>
+
+          <div class="context-grid">
+            <div>
+              <label for="audience-input">Audience</label>
+              <input id="audience-input" value="general adult audience" maxlength="200">
+            </div>
+            <div>
+              <label for="tone-input">Tone</label>
+              <input id="tone-input" value="playful" maxlength="100">
+            </div>
+          </div>
+
+          <fieldset>
+            <legend>Choose one gene to edit</legend>
+            <div class="gene-grid" id="gene-grid">
+              <label class="gene active"><input type="radio" name="gene" value="brevity" checked><span>✂</span>Brevity</label>
+              <label class="gene"><input type="radio" name="gene" value="specificity"><span>◎</span>Specificity</label>
+              <label class="gene"><input type="radio" name="gene" value="misdirection"><span>↪</span>Misdirection</label>
+              <label class="gene"><input type="radio" name="gene" value="punchline"><span>!</span>Punchline</label>
+              <label class="gene"><input type="radio" name="gene" value="timing"><span>◷</span>Timing</label>
+              <label class="gene"><input type="radio" name="gene" value="tone"><span>◐</span>Tone</label>
+            </div>
+          </fieldset>
+
+          <button id="run-button" class="primary-button" type="submit">
+            <span>Sequence the joke</span><span aria-hidden="true">→</span>
+          </button>
+
+          <div id="progress" class="progress" hidden aria-live="polite">
+            <div class="progress-bar"><span></span></div>
+            <p id="progress-copy">Gemma is mapping the setup, turn, and punchline…</p>
+          </div>
+          <p id="error-message" class="error-message" hidden role="alert"></p>
+        </form>
+
+        <section id="results-panel" class="results-panel empty" aria-live="polite">
+          <div id="empty-state" class="empty-state">
+            <div class="empty-orbit"><span></span><span></span><span></span></div>
+            <p class="eyebrow">THE GENOME WILL APPEAR HERE</p>
+            <h2>Structure before suggestion.</h2>
+            <p>We first expose the comedic mechanism. Only then does Gemma create controlled alternatives.</p>
+          </div>
+
+          <div id="result-content" hidden>
+            <div class="result-header">
+              <div>
+                <p class="eyebrow">HUMOR GENOME</p>
+                <h2>What makes this bit move</h2>
+              </div>
+              <div class="confidence"><span id="confidence-value">0%</span><small>model confidence</small></div>
+            </div>
+
+            <div class="genome-line" aria-hidden="true"><span></span><span></span><span></span></div>
+            <div id="anatomy-grid" class="anatomy-grid"></div>
+
+            <div class="mechanism-section">
+              <h3>Detected mechanisms</h3>
+              <div id="mechanism-list" class="mechanism-list"></div>
+            </div>
+
+            <div class="ab-heading">
+              <div>
+                <p class="eyebrow">BLIND COMPARISON</p>
+                <h2>Which edit earns the next draft?</h2>
+              </div>
+              <span id="target-gene-badge" class="target-badge"></span>
+            </div>
+            <div id="variant-grid" class="variant-grid"></div>
+
+            <div id="comparison-panel" class="comparison-panel" hidden>
+              <p class="eyebrow">AFTER YOUR CHOICE</p>
+              <h3 id="choice-heading"></h3>
+              <p id="tradeoff-copy"></p>
+              <div id="observation-list" class="observation-list"></div>
+              <div class="human-test"><strong>Suggested human test</strong><p id="human-test-copy"></p></div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <span>Gemma proposes. Humans decide.</span>
+      <span>Humor Genome NYC · 2026</span>
+    </footer>
+    <script src="/static/app.js" defer></script>
+  </body>
+</html>
