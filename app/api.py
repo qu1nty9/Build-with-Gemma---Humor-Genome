@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.config import settings
+from app.feedback import FeedbackStore
 from app.gemma import GemmaError, GemmaQualityError, OllamaGemmaGateway
 from app.pipeline import HumorGenomePipeline, PipelineQualityError
 from app.schemas import (
@@ -16,6 +17,8 @@ from app.schemas import (
     ComparisonResponse,
     FlowRequest,
     FlowResponse,
+    FeedbackReceipt,
+    FeedbackRequest,
     HumorGenome,
     MutationRequest,
     MutationResponse,
@@ -23,6 +26,7 @@ from app.schemas import (
 
 app = FastAPI(title="Humor Genome Lab", version="0.1.0")
 pipeline = HumorGenomePipeline(OllamaGemmaGateway(settings))
+feedback_store = FeedbackStore(settings.feedback_db_path)
 static_dir = Path(__file__).parent / "static"
 logger = logging.getLogger(__name__)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -73,3 +77,8 @@ async def compare(request: CompareRequest) -> ComparisonResponse:
 @app.post("/v1/flow", response_model=FlowResponse)
 async def flow(request: FlowRequest) -> FlowResponse:
     return await _run(pipeline.flow(request))
+
+
+@app.post("/v1/feedback", response_model=FeedbackReceipt)
+async def save_feedback(request: FeedbackRequest) -> FeedbackReceipt:
+    return feedback_store.save(request)

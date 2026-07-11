@@ -68,3 +68,15 @@ def test_brevity_variant_fails_when_longer() -> None:
     issues = mutation_issues(request, response)
     assert any("must be shorter" in issue for issue in issues)
 
+
+def test_failed_model_self_check_is_a_quality_issue() -> None:
+    source = "My smart fridge tells me to stop opening it."
+    request = MutationRequest(source_text=source, genome=genome(source), target_gene=ComedyGene.BREVITY)
+    failed = variant("A", "My fridge says: stop opening me.")
+    failed.changed_only_target_gene = False
+    response = MutationResponse(
+        source_text=source,
+        target_gene=ComedyGene.BREVITY,
+        variants=[failed, variant("B", "My fridge says: keep it closed.")],
+    )
+    assert any("model self-check" in issue for issue in mutation_issues(request, response))

@@ -31,6 +31,8 @@ def mutation_issues(request: MutationRequest, response: MutationResponse) -> lis
         candidate_normalized = normalized(variant.text)
         prefix = f"{variant.label}:"
 
+        if not variant.changed_only_target_gene:
+            issues.append(f"{prefix} model self-check reports that more than the target gene changed")
         if candidate_normalized == source_normalized:
             issues.append(f"{prefix} identical to the source")
         if candidate_normalized in seen_variants:
@@ -51,4 +53,3 @@ def mutation_issues(request: MutationRequest, response: MutationResponse) -> lis
     if len(seen_variants) != request.number_of_variants:
         issues.append("The response does not contain the requested number of distinct variants")
     return issues
-

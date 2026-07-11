@@ -11,6 +11,7 @@ class Settings:
     timeout_seconds: float = float(os.getenv("GEMMA_TIMEOUT_SECONDS", "180"))
     max_output_tokens: int = int(os.getenv("GEMMA_MAX_OUTPUT_TOKENS", "1200"))
     context_tokens: int = int(os.getenv("GEMMA_CONTEXT_TOKENS", "8192"))
+    feedback_db_path: str = os.getenv("FEEDBACK_DB_PATH", "data/feedback.sqlite3")
 
 
 settings = Settings()

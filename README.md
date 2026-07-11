@@ -15,6 +15,8 @@ The repository contains the first text-first vertical slice:
 
 The default interactive runtime is `gemma4:e2b` through Ollama. `gemma4:12b` is reserved for slower offline quality comparisons. The model adapter is isolated from the domain pipeline so it can later be replaced by an official Hugging Face or hosted Gemma runtime.
 
+On the reference M1 Pro environment, E2B completed the validated `analyze → mutate → compare` flow in 45.8 seconds. Reproducible engineering measurements and known failure cases are recorded in [`evaluation/BENCHMARK_LOG.md`](evaluation/BENCHMARK_LOG.md).
+
 ## Quickstart
 
 Requirements: Python 3.11+ and Ollama.
@@ -60,6 +62,7 @@ curl http://127.0.0.1:8000/health
 - `POST /v1/mutate`
 - `POST /v1/compare`
 - `POST /v1/flow`
+- `POST /v1/feedback` — stores the joke and blind choice only after explicit UI opt-in
 
 The web UI deliberately calls `analyze` and `mutate` first. It calls `compare` only after the user makes a blind choice, avoiding unnecessary model latency before human input. `flow` remains available for offline evaluation.
 
@@ -75,5 +78,6 @@ The web UI deliberately calls `analyze` and `mutate` first. It calls `compare` o
 - Model confidence is exposed and alternative readings are preserved.
 - API keys and model credentials must remain server-side.
 - Public evaluation examples must be original, public domain, or permissively licensed.
+- A/B material is persisted locally only when the user explicitly selects the evaluation opt-in checkbox.
 
 The full hackathon strategy is documented in [`HACKATHON_PLAN_RU.md`](HACKATHON_PLAN_RU.md).

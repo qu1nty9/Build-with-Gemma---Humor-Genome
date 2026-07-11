@@ -84,6 +84,15 @@ class FakeGateway:
         return schema.model_validate(data)
 
 
+class ExtraVariantGateway(FakeGateway):
+    async def generate(self, *, prompt_name: str, user_payload: dict, schema: type[SchemaT]) -> SchemaT:
+        result = await super().generate(prompt_name=prompt_name, user_payload=user_payload, schema=schema)
+        if schema is MutationResponse:
+            extra = result.variants[1].model_copy(update={"label": "C", "text": "My therapist charged extra to discuss money."})
+            return result.model_copy(update={"variants": [*result.variants, extra]})
+        return result
+
+
 async def test_complete_flow() -> None:
     pipeline = HumorGenomePipeline(FakeGateway())
     result = await pipeline.flow(
@@ -95,3 +104,15 @@ async def test_complete_flow() -> None:
     assert result.model == "fake-gemma"
     assert result.mutation.target_gene == ComedyGene.BREVITY
     assert len(result.comparison.observations) == 2
+
+
+async def test_mutation_trims_extra_model_variants() -> None:
+    pipeline = HumorGenomePipeline(ExtraVariantGateway())
+    result = await pipeline.flow(
+        FlowRequest(
+            text="I told my therapist I worry about money. She charged me to continue.",
+            target_gene=ComedyGene.BREVITY,
+            number_of_variants=2,
+        )
+    )
+    assert [variant.label for variant in result.mutation.variants] == ["A", "B"]

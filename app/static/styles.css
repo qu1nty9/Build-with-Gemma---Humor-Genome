@@ -62,6 +62,8 @@ fieldset { padding: 0; margin: 0 0 28px; border: 0; }
 .gene.active span { color: #111; }
 .gene input { position: absolute; opacity: 0; pointer-events: none; }
 .primary-button { width: 100%; padding: 17px 18px; display: flex; justify-content: space-between; color: #111; background: var(--orange); border: 0; border-radius: 3px; font-weight: 900; cursor: pointer; transition: .2s; }
+.consent-control { margin: -4px 0 18px; display: flex; align-items: flex-start; gap: 10px; color: #8c8981; font-size: 10px; line-height: 1.45; text-transform: none; letter-spacing: .04em; cursor: pointer; }
+.consent-control input { width: auto; margin: 1px 0 0; accent-color: var(--acid); }
 .primary-button:hover { filter: brightness(1.1); transform: translateY(-1px); }
 .primary-button:disabled { cursor: wait; filter: grayscale(.5); transform: none; opacity: .7; }
 .progress { margin-top: 20px; }
@@ -118,6 +120,7 @@ fieldset { padding: 0; margin: 0 0 28px; border: 0; }
 .observation p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
 .human-test { margin-top: 20px; padding: 14px; background: rgba(255,255,255,.035); font-size: 12px; }
 .human-test p { margin: 6px 0 0; color: var(--muted); line-height: 1.5; }
+.feedback-status { margin: 14px 0 0; color: #858b82; font-size: 11px; }
 
 footer { color: #77746c; border-top: 1px solid var(--line); font-size: 11px; text-transform: uppercase; letter-spacing: .12em; }
 

@@ -37,6 +37,8 @@ class HumorGenomePipeline:
             user_payload=request.model_dump(mode="json"),
             schema=MutationResponse,
         )
+        if len(response.variants) > request.number_of_variants:
+            response = response.model_copy(update={"variants": response.variants[: request.number_of_variants]})
         issues = mutation_issues(request, response)
         if not issues:
             return response
@@ -49,6 +51,8 @@ class HumorGenomePipeline:
             user_payload=retry_payload,
             schema=MutationResponse,
         )
+        if len(repaired.variants) > request.number_of_variants:
+            repaired = repaired.model_copy(update={"variants": repaired.variants[: request.number_of_variants]})
         remaining_issues = mutation_issues(request, repaired)
         if remaining_issues:
             raise PipelineQualityError("; ".join(remaining_issues))

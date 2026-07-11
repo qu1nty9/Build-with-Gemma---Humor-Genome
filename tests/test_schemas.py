@@ -40,12 +40,12 @@ def test_mutation_response_rejects_wrong_gene() -> None:
         )
 
 
-def test_mutation_response_rejects_failed_one_gene_check() -> None:
+def test_mutation_response_preserves_failed_one_gene_check_for_external_validation() -> None:
     failed = make_variant(ComedyGene.BREVITY, "B")
     failed.changed_only_target_gene = False
-    with pytest.raises(ValidationError, match="one-gene self-check"):
-        MutationResponse(
-            source_text="A valid source joke.",
-            target_gene=ComedyGene.BREVITY,
-            variants=[make_variant(ComedyGene.BREVITY, "A"), failed],
-        )
+    response = MutationResponse(
+        source_text="A valid source joke.",
+        target_gene=ComedyGene.BREVITY,
+        variants=[make_variant(ComedyGene.BREVITY, "A"), failed],
+    )
+    assert response.variants[1].changed_only_target_gene is False

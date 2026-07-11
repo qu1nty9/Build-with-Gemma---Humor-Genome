@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -90,7 +91,12 @@ class MutationVariant(BaseModel):
     changed_gene: ComedyGene
     change_summary: str = Field(min_length=1, max_length=500)
     preserved_invariants: list[str] = Field(min_length=1, max_length=10)
-    changed_only_target_gene: bool
+    changed_only_target_gene: bool = Field(
+        description=(
+            "True when the target gene is the only intentional editing dimension. "
+            "Necessary surface wording changes do not count as another gene when premise, core mechanism, punchline meaning, and voice remain stable."
+        )
+    )
     confidence: float = Field(ge=0, le=1)
 
 
@@ -104,8 +110,6 @@ class MutationResponse(BaseModel):
     def variants_match_target(self) -> "MutationResponse":
         if any(variant.changed_gene != self.target_gene for variant in self.variants):
             raise ValueError("Every variant must change the requested target_gene")
-        if any(not variant.changed_only_target_gene for variant in self.variants):
-            raise ValueError("Every variant must pass the one-gene self-check")
         return self
 
 
@@ -143,3 +147,25 @@ class FlowResponse(BaseModel):
     comparison: ComparisonResponse
     model: str
     stage_latency_seconds: dict[str, float]
+
+
+class FeedbackRequest(BaseModel):
+    experiment_id: str = Field(min_length=8, max_length=64)
+    source_text: str = Field(min_length=3, max_length=4000)
+    target_gene: ComedyGene
+    variants: list[MutationVariant] = Field(min_length=2, max_length=3)
+    chosen_variant_label: str = Field(min_length=1, max_length=20)
+    blind_label: str = Field(pattern=r"^[A-C]$")
+    model: str = Field(min_length=2, max_length=100)
+    consent: Literal[True]
+
+    @model_validator(mode="after")
+    def chosen_variant_exists(self) -> "FeedbackRequest":
+        if self.chosen_variant_label not in {variant.label for variant in self.variants}:
+            raise ValueError("chosen_variant_label must match a submitted variant")
+        return self
+
+
+class FeedbackReceipt(BaseModel):
+    experiment_id: str
+    saved: bool

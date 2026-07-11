@@ -10,6 +10,7 @@ const emptyState = document.querySelector("#empty-state");
 const resultContent = document.querySelector("#result-content");
 
 let currentRun = null;
+let runtimeModel = "unknown";
 
 function updateCount() {
   characterCount.textContent = `${jokeInput.value.length} / 4000`;
@@ -42,6 +43,17 @@ async function postJson(path, payload) {
   const data = await response.json();
   if (!response.ok) throw new Error(data.detail || "The model could not complete this run.");
   return data;
+}
+
+async function loadRuntime() {
+  try {
+    const response = await fetch("/health");
+    const data = await response.json();
+    runtimeModel = data.model || "unknown";
+    document.querySelector("#model-name").textContent = runtimeModel;
+  } catch (_error) {
+    document.querySelector("#model-name").textContent = "runtime offline";
+  }
 }
 
 function textElement(tag, className, text) {
@@ -128,6 +140,7 @@ async function revealChoice(chosenCard, blindLabel, variant) {
   const list = document.querySelector("#observation-list");
   list.replaceChildren();
   panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  void saveFeedback(blindLabel, variant);
 
   try {
     const comparison = await postJson("/v1/compare", {
@@ -153,6 +166,30 @@ async function revealChoice(chosenCard, blindLabel, variant) {
     document.querySelector("#choice-heading").textContent = `You chose ${blindLabel}.`;
     document.querySelector("#tradeoff-copy").textContent = error.message;
     document.querySelector("#human-test-copy").textContent = "Your blind choice is still valid even when model explanation fails.";
+  }
+}
+
+async function saveFeedback(blindLabel, variant) {
+  const status = document.querySelector("#feedback-status");
+  if (!currentRun.saveFeedback) {
+    status.textContent = "Choice kept in this browser only.";
+    return;
+  }
+  status.textContent = "Saving your opted-in evaluation example locally…";
+  try {
+    await postJson("/v1/feedback", {
+      experiment_id: currentRun.experimentId,
+      source_text: currentRun.sourceText,
+      target_gene: currentRun.mutation.target_gene,
+      variants: currentRun.mutation.variants,
+      chosen_variant_label: variant.label,
+      blind_label: blindLabel,
+      model: runtimeModel,
+      consent: true,
+    });
+    status.textContent = "A/B choice saved locally for evaluation.";
+  } catch (_error) {
+    status.textContent = "The choice could not be saved; the comparison still works.";
   }
 }
 
@@ -200,7 +237,14 @@ form.addEventListener("submit", async (event) => {
       invariants: ["preserve the premise", "preserve the author's voice"],
       number_of_variants: payload.number_of_variants,
     });
-    currentRun = { sourceText: payload.text, context: payload.context, genome, mutation };
+    currentRun = {
+      experimentId: crypto.randomUUID(),
+      sourceText: payload.text,
+      context: payload.context,
+      genome,
+      mutation,
+      saveFeedback: document.querySelector("#feedback-consent").checked,
+    };
     renderVariants(mutation);
   } catch (error) {
     errorMessage.textContent = error.message;
@@ -209,3 +253,5 @@ form.addEventListener("submit", async (event) => {
     setLoading(false);
   }
 });
+
+void loadRuntime();

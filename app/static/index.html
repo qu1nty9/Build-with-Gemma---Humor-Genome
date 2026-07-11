@@ -15,7 +15,7 @@
         <span class="brand-mark">HG</span>
         <span>Humor Genome Lab</span>
       </a>
-      <div class="model-badge"><span class="status-dot"></span> Local Gemma 4</div>
+      <div class="model-badge"><span class="status-dot"></span> <span id="model-name">Checking runtime…</span></div>
     </header>
 
     <main>
@@ -61,6 +61,11 @@
               <label class="gene"><input type="radio" name="gene" value="tone"><span>◐</span>Tone</label>
             </div>
           </fieldset>
+
+          <label class="consent-control" for="feedback-consent">
+            <input id="feedback-consent" type="checkbox">
+            <span>Save this joke and my A/B choice locally for evaluation</span>
+          </label>
 
           <button id="run-button" class="primary-button" type="submit">
             <span>Sequence the joke</span><span aria-hidden="true">→</span>
@@ -113,6 +118,7 @@
               <p id="tradeoff-copy"></p>
               <div id="observation-list" class="observation-list"></div>
               <div class="human-test"><strong>Suggested human test</strong><p id="human-test-copy"></p></div>
+              <p id="feedback-status" class="feedback-status"></p>
             </div>
           </div>
         </section>
