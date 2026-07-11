@@ -20,6 +20,8 @@ Measured locally on 11 July 2026.
 | E2B warm `analyze`, same joke | Valid structured `HumorGenome` | 15.644 s | Warm-state interactive latency is acceptable |
 | 12B `analyze`, same comparison run | Valid structured `HumorGenome` | 58.422 s | Approximately 2.6× slower than the paired E2B run |
 | E2B full flow after mutation fixes | Valid `analyze → mutate → compare` result | 45.828 s | Meets the MVP target of a complete flow in under 60 seconds |
+| E2B three-case seed run | 2/3 complete flows passed | 19.700–37.101 s | Brevity and misdirection passed; specificity exposed schema-envelope failures |
+| E2B specificity regression | Structurally valid, semantically unstable | 16.819–20.577 s | Strict gene contract correctly rejects variants that drift into tone or wording |
 
 ## Quality observation
 
@@ -39,6 +41,8 @@ The first E2B brevity mutation attempts failed the semantic gate in about 23 sec
 
 After these fixes, the same E2B configuration completed the full therapy-fee flow successfully. It produced exactly two `brevity` variants, marked both as changing only the requested gene, preserved the premise and author voice, and passed the independent mutation validator. Stage latency was 22.404 seconds for analysis, 10.441 seconds for mutation, and 12.979 seconds for comparison.
 
+The first three-case seed run completed the `brevity` and `misdirection` examples but failed `specificity` because E2B omitted request metadata and later wrapped the payload under the schema class name. These presentation failures are now repaired locally by restoring only authoritative request fields and unwrapping only the exact expected schema name. Follow-up runs exposed a more important semantic limitation: E2B sometimes changed tone or verbs instead of making an existing detail more concrete. A loose prompt produced a technically passing result that failed manual inspection; the stricter gene contract correctly made the model report that it could not isolate specificity. This case remains a documented failure, not a success metric.
+
 ## Decisions resulting from the spike
 
 1. Use `gemma4:e2b` as the interactive candidate.
@@ -48,5 +52,7 @@ After these fixes, the same E2B configuration completed the full therapy-fee flo
 5. Call `compare` only after the human makes a blind A/B choice.
 6. Keep model self-assessment in the output, but enforce it in an independent deterministic validator with explicit regeneration feedback.
 7. Promote E2B from interactive candidate to the primary MVP runtime after the successful sub-60-second full flow.
+8. Treat `brevity` and `misdirection` as calibrated demo genes; keep other genes visibly experimental until they pass multi-example human or teacher audit.
+9. Require unique mutation labels and an exact one-to-one mapping between variants and comparison observations so blind A/B choices remain unambiguous.
 
 These are engineering measurements on one machine, not final competition results. The same examples must be rerun on E2B and on the eventual hosted runtime.

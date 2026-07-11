@@ -1,6 +1,3 @@
-import pytest
-from pydantic import ValidationError
-
 from app.schemas import ComedyGene, MutationResponse, MutationVariant
 
 
@@ -28,16 +25,16 @@ def test_mutation_response_accepts_matching_genes() -> None:
     assert len(response.variants) == 2
 
 
-def test_mutation_response_rejects_wrong_gene() -> None:
-    with pytest.raises(ValidationError, match="requested target_gene"):
-        MutationResponse(
-            source_text="A valid source joke.",
-            target_gene=ComedyGene.BREVITY,
-            variants=[
-                make_variant(ComedyGene.BREVITY, "A"),
-                make_variant(ComedyGene.TONE, "B"),
-            ],
-        )
+def test_mutation_response_preserves_wrong_gene_for_external_validation() -> None:
+    response = MutationResponse(
+        source_text="A valid source joke.",
+        target_gene=ComedyGene.BREVITY,
+        variants=[
+            make_variant(ComedyGene.BREVITY, "A"),
+            make_variant(ComedyGene.TONE, "B"),
+        ],
+    )
+    assert response.variants[1].changed_gene == ComedyGene.TONE
 
 
 def test_mutation_response_preserves_failed_one_gene_check_for_external_validation() -> None:

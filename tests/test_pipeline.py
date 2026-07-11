@@ -93,6 +93,32 @@ class ExtraVariantGateway(FakeGateway):
         return result
 
 
+class RepairingComparisonGateway(FakeGateway):
+    comparison_calls = 0
+
+    async def generate(self, *, prompt_name: str, user_payload: dict, schema: type[SchemaT]) -> SchemaT:
+        result = await super().generate(prompt_name=prompt_name, user_payload=user_payload, schema=schema)
+        if schema is ComparisonResponse:
+            self.comparison_calls += 1
+            if "validator_feedback" not in user_payload:
+                duplicate = result.observations[0].model_copy()
+                return result.model_copy(update={"observations": [duplicate, duplicate]})
+        return result
+
+
+class RepairingMutationGateway(FakeGateway):
+    mutation_calls = 0
+
+    async def generate(self, *, prompt_name: str, user_payload: dict, schema: type[SchemaT]) -> SchemaT:
+        result = await super().generate(prompt_name=prompt_name, user_payload=user_payload, schema=schema)
+        if schema is MutationResponse:
+            self.mutation_calls += 1
+            if "validator_feedback" not in user_payload:
+                wrong = result.variants[0].model_copy(update={"changed_gene": ComedyGene.TONE})
+                return result.model_copy(update={"variants": [wrong, result.variants[1]]})
+        return result
+
+
 async def test_complete_flow() -> None:
     pipeline = HumorGenomePipeline(FakeGateway())
     result = await pipeline.flow(
@@ -116,3 +142,31 @@ async def test_mutation_trims_extra_model_variants() -> None:
         )
     )
     assert [variant.label for variant in result.mutation.variants] == ["A", "B"]
+
+
+async def test_comparison_retries_with_validator_feedback() -> None:
+    gateway = RepairingComparisonGateway()
+    pipeline = HumorGenomePipeline(gateway)
+    result = await pipeline.flow(
+        FlowRequest(
+            text="I told my therapist I worry about money. She charged me to continue.",
+            target_gene=ComedyGene.BREVITY,
+        )
+    )
+
+    assert gateway.comparison_calls == 2
+    assert [observation.label for observation in result.comparison.observations] == ["A", "B"]
+
+
+async def test_mutation_retries_with_validator_feedback() -> None:
+    gateway = RepairingMutationGateway()
+    pipeline = HumorGenomePipeline(gateway)
+    result = await pipeline.flow(
+        FlowRequest(
+            text="I told my therapist I worry about money. She charged me to continue.",
+            target_gene=ComedyGene.BREVITY,
+        )
+    )
+
+    assert gateway.mutation_calls == 2
+    assert all(variant.changed_gene == ComedyGene.BREVITY for variant in result.mutation.variants)

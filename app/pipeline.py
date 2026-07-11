@@ -13,7 +13,7 @@ from app.schemas import (
     MutationRequest,
     MutationResponse,
 )
-from app.validation import mutation_issues
+from app.validation import comparison_issues, mutation_issues
 
 
 class PipelineQualityError(RuntimeError):
@@ -31,14 +31,26 @@ class HumorGenomePipeline:
             schema=HumorGenome,
         )
 
+    @staticmethod
+    def _normalize_mutation_response(
+        request: MutationRequest,
+        response: MutationResponse,
+    ) -> MutationResponse:
+        return response.model_copy(
+            update={
+                "source_text": request.source_text,
+                "target_gene": request.target_gene,
+                "variants": response.variants[: request.number_of_variants],
+            }
+        )
+
     async def mutate(self, request: MutationRequest) -> MutationResponse:
         response = await self.gateway.generate(
             prompt_name="mutate_v1",
             user_payload=request.model_dump(mode="json"),
             schema=MutationResponse,
         )
-        if len(response.variants) > request.number_of_variants:
-            response = response.model_copy(update={"variants": response.variants[: request.number_of_variants]})
+        response = self._normalize_mutation_response(request, response)
         issues = mutation_issues(request, response)
         if not issues:
             return response
@@ -51,19 +63,34 @@ class HumorGenomePipeline:
             user_payload=retry_payload,
             schema=MutationResponse,
         )
-        if len(repaired.variants) > request.number_of_variants:
-            repaired = repaired.model_copy(update={"variants": repaired.variants[: request.number_of_variants]})
+        repaired = self._normalize_mutation_response(request, repaired)
         remaining_issues = mutation_issues(request, repaired)
         if remaining_issues:
             raise PipelineQualityError("; ".join(remaining_issues))
         return repaired
 
     async def compare(self, request: CompareRequest) -> ComparisonResponse:
-        return await self.gateway.generate(
+        response = await self.gateway.generate(
             prompt_name="compare_v1",
             user_payload=request.model_dump(mode="json"),
             schema=ComparisonResponse,
         )
+        issues = comparison_issues(request, response)
+        if not issues:
+            return response
+
+        retry_payload = request.model_dump(mode="json")
+        retry_payload["validator_feedback"] = issues
+        retry_payload["instruction"] = "Regenerate the comparison and fix every validator issue."
+        repaired = await self.gateway.generate(
+            prompt_name="compare_v1",
+            user_payload=retry_payload,
+            schema=ComparisonResponse,
+        )
+        remaining_issues = comparison_issues(request, repaired)
+        if remaining_issues:
+            raise PipelineQualityError("; ".join(remaining_issues))
+        return repaired
 
     async def flow(self, request: FlowRequest) -> FlowResponse:
         stage_latency: dict[str, float] = {}

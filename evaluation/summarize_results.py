@@ -53,9 +53,12 @@ def controlled_mutation_passes(record: dict[str, Any]) -> bool | None:
         return False
 
     rendered = [normalized(variant.get("text", "")) for variant in variants]
+    labels = [str(variant.get("label", "")).strip().casefold() for variant in variants]
     if not source or any(not text for text in rendered):
         return False
     if len(set(rendered)) != len(rendered):
+        return False
+    if any(not label for label in labels) or len(set(labels)) != len(labels):
         return False
     if any(text == normalized(source) for text in rendered):
         return False

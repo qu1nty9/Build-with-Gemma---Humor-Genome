@@ -17,6 +17,8 @@ Each output row records:
 - success or structured failure;
 - the complete validated flow result.
 
+Use `--ids calendar_001` for a focused regression run without repeating the entire dataset.
+
 Generated results should only be committed after the model, prompt version, runtime, and sampling configuration have been frozen.
 
 Compare the analysis stage across the interactive and benchmark models:

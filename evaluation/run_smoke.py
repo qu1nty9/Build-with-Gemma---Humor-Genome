@@ -17,17 +17,21 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--limit", type=int)
+    parser.add_argument("--ids", nargs="+", help="Run only the selected example IDs.")
     return parser.parse_args()
 
 
-def load_examples(path: Path, limit: int | None) -> list[dict]:
+def load_examples(path: Path, limit: int | None, ids: list[str] | None = None) -> list[dict]:
     rows = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    if ids is not None:
+        selected = set(ids)
+        rows = [row for row in rows if row["id"] in selected]
     return rows[:limit] if limit is not None else rows
 
 
 async def run() -> None:
     args = parse_args()
-    examples = load_examples(args.input, args.limit)
+    examples = load_examples(args.input, args.limit, args.ids)
     pipeline = HumorGenomePipeline(OllamaGemmaGateway(settings))
     args.output.parent.mkdir(parents=True, exist_ok=True)
 

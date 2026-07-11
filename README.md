@@ -66,6 +66,8 @@ curl http://127.0.0.1:8000/health
 
 The web UI deliberately calls `analyze` and `mutate` first. It calls `compare` only after the user makes a blind choice, avoiding unnecessary model latency before human input. `flow` remains available for offline evaluation.
 
+`brevity` and `misdirection` are the currently calibrated demo genes. The UI labels the remaining genes as experimental until they pass the planned multi-example human or teacher audit; known failures are reported in the benchmark log.
+
 ## Tests
 
 ```bash

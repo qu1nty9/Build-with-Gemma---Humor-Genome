@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from difflib import SequenceMatcher
 
-from app.schemas import ComedyGene, MutationRequest, MutationResponse
+from app.schemas import ComedyGene, CompareRequest, ComparisonResponse, MutationRequest, MutationResponse
 
 WORD_PATTERN = re.compile(r"\b[\w'-]+\b", flags=re.UNICODE)
 
@@ -26,11 +26,20 @@ def mutation_issues(request: MutationRequest, response: MutationResponse) -> lis
     source_normalized = normalized(request.source_text)
     source_words = word_count(request.source_text)
     seen_variants: set[str] = set()
+    seen_labels: set[str] = set()
 
     for variant in response.variants:
         candidate_normalized = normalized(variant.text)
         prefix = f"{variant.label}:"
+        label_key = variant.label.strip().casefold()
 
+        if label_key in seen_labels:
+            issues.append(f"{prefix} label duplicates another variant; every label must be unique")
+        seen_labels.add(label_key)
+        if variant.changed_gene != request.target_gene:
+            issues.append(
+                f"{prefix} changed_gene is {variant.changed_gene.value}; it must match requested {request.target_gene.value}"
+            )
         if not variant.changed_only_target_gene:
             issues.append(f"{prefix} model self-check reports that more than the target gene changed")
         if candidate_normalized == source_normalized:
@@ -52,4 +61,19 @@ def mutation_issues(request: MutationRequest, response: MutationResponse) -> lis
 
     if len(seen_variants) != request.number_of_variants:
         issues.append("The response does not contain the requested number of distinct variants")
+    return issues
+
+
+def comparison_issues(request: CompareRequest, response: ComparisonResponse) -> list[str]:
+    """Ensure every submitted variant has exactly one matching observation."""
+    expected = [variant.label for variant in request.variants]
+    observed = [observation.label for observation in response.observations]
+    issues: list[str] = []
+    if len(observed) != len(expected):
+        issues.append(f"Expected {len(expected)} observations, received {len(observed)}")
+    if sorted(observed) != sorted(expected):
+        issues.append(
+            "Observation labels must match variant labels exactly once; "
+            f"expected {expected}, received {observed}"
+        )
     return issues

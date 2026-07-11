@@ -106,12 +106,6 @@ class MutationResponse(BaseModel):
     variants: list[MutationVariant] = Field(min_length=2, max_length=3)
     caveats: list[str] = Field(default_factory=list, max_length=10)
 
-    @model_validator(mode="after")
-    def variants_match_target(self) -> "MutationResponse":
-        if any(variant.changed_gene != self.target_gene for variant in self.variants):
-            raise ValueError("Every variant must change the requested target_gene")
-        return self
-
 
 class CompareRequest(BaseModel):
     source_text: str = Field(min_length=3, max_length=4000)

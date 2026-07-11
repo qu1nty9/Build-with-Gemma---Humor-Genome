@@ -61,6 +61,29 @@ class OllamaGemmaGateway:
             cleaned = cleaned[object_start : object_end + 1]
         return cleaned
 
+    @classmethod
+    def _validate_content(
+        cls,
+        content: str,
+        user_payload: dict,
+        schema: type[SchemaT],
+    ) -> SchemaT:
+        """Validate model JSON, restoring only authoritative metadata echoed from the request."""
+        extracted = cls._extract_json(content)
+        try:
+            candidate = json.loads(extracted)
+        except json.JSONDecodeError:
+            return schema.model_validate_json(extracted)
+
+        if isinstance(candidate, dict) and isinstance(candidate.get(schema.__name__), dict):
+            candidate = candidate[schema.__name__]
+
+        if isinstance(candidate, dict):
+            for field_name in schema.model_fields:
+                if field_name not in candidate and field_name in user_payload:
+                    candidate[field_name] = user_payload[field_name]
+        return schema.model_validate(candidate)
+
     async def _chat(self, messages: list[dict[str, str]], schema: type[SchemaT]) -> str:
         payload = {
             "model": self.model_name,
@@ -108,7 +131,7 @@ class OllamaGemmaGateway:
         ]
         content = await self._chat(messages, schema)
         try:
-            return schema.model_validate_json(self._extract_json(content))
+            return self._validate_content(content, user_payload, schema)
         except ValidationError as first_error:
             repair_messages = [
                 *messages,
@@ -125,7 +148,7 @@ class OllamaGemmaGateway:
             ]
             repaired = await self._chat(repair_messages, schema)
             try:
-                return schema.model_validate_json(self._extract_json(repaired))
+                return self._validate_content(repaired, user_payload, schema)
             except ValidationError as second_error:
                 messages = " ".join(error["msg"] for error in second_error.errors())
                 if "one-gene self-check" in messages or "requested target_gene" in messages:

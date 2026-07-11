@@ -57,6 +57,8 @@ fieldset { padding: 0; margin: 0 0 28px; border: 0; }
 .gene-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .gene { min-height: 68px; margin: 0; padding: 12px 8px; display: flex; flex-direction: column; justify-content: center; gap: 7px; text-align: center; color: var(--muted); background: var(--surface); border: 1px solid var(--line); border-radius: 4px; cursor: pointer; transition: .2s ease; }
 .gene span { color: var(--ink); font-size: 17px; }
+.gene small { color: inherit; font-size: 9px; letter-spacing: .08em; text-transform: uppercase; }
+.gene-note { margin: 0 0 10px; color: var(--muted); font-size: 12px; }
 .gene:hover { border-color: #65635b; transform: translateY(-1px); }
 .gene.active { color: #111; background: var(--acid); border-color: var(--acid); }
 .gene.active span { color: #111; }

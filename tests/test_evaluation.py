@@ -1,4 +1,5 @@
 from evaluation.compare_models import mechanism_jaccard, mechanism_names
+from evaluation.run_smoke import load_examples
 from evaluation.summarize_results import controlled_mutation_passes, percentile, render_markdown, summarize
 
 
@@ -38,11 +39,13 @@ def full_flow_record(*, changed_only_target_gene: bool = True) -> dict:
                 "target_gene": "brevity",
                 "variants": [
                     {
+                        "label": "A",
                         "text": "This setup is too long for the punchline.",
                         "changed_gene": "brevity",
                         "changed_only_target_gene": changed_only_target_gene,
                     },
                     {
+                        "label": "B",
                         "text": "The setup runs long for its punchline.",
                         "changed_gene": "brevity",
                         "changed_only_target_gene": True,
@@ -72,3 +75,10 @@ def test_summarize_produces_writeup_metrics() -> None:
     assert metrics["latency_seconds"]["p50"] == 12.0
     assert metrics["licensed_record_rate"] == 0.5
     assert "Controlled mutation" in render_markdown(result)
+
+
+def test_load_examples_can_select_ids(tmp_path) -> None:
+    path = tmp_path / "examples.jsonl"
+    path.write_text('{"id":"a"}\n{"id":"b"}\n', encoding="utf-8")
+
+    assert load_examples(path, limit=None, ids=["b"]) == [{"id": "b"}]

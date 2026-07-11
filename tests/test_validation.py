@@ -1,5 +1,13 @@
-from app.schemas import ComedyGene, HumorGenome, MutationRequest, MutationResponse, MutationVariant
-from app.validation import lexical_similarity, mutation_issues, word_count
+from app.schemas import (
+    ComedyGene,
+    CompareRequest,
+    ComparisonResponse,
+    HumorGenome,
+    MutationRequest,
+    MutationResponse,
+    MutationVariant,
+)
+from app.validation import comparison_issues, lexical_similarity, mutation_issues, word_count
 
 
 def genome(source: str) -> HumorGenome:
@@ -80,3 +88,51 @@ def test_failed_model_self_check_is_a_quality_issue() -> None:
         variants=[failed, variant("B", "My fridge says: keep it closed.")],
     )
     assert any("model self-check" in issue for issue in mutation_issues(request, response))
+
+
+def test_wrong_changed_gene_is_a_quality_issue() -> None:
+    source = "My smart fridge tells me to stop opening it."
+    request = MutationRequest(source_text=source, genome=genome(source), target_gene=ComedyGene.BREVITY)
+    wrong_gene = variant("A", "My fridge says: stop opening me.")
+    wrong_gene.changed_gene = ComedyGene.TONE
+    response = MutationResponse(
+        source_text=source,
+        target_gene=ComedyGene.BREVITY,
+        variants=[wrong_gene, variant("B", "My fridge says: keep it closed.")],
+    )
+    assert any("must match requested brevity" in issue for issue in mutation_issues(request, response))
+
+
+def test_duplicate_variant_labels_are_a_quality_issue() -> None:
+    source = "My smart fridge tells me to stop opening it."
+    request = MutationRequest(source_text=source, genome=genome(source), target_gene=ComedyGene.BREVITY)
+    response = MutationResponse(
+        source_text=source,
+        target_gene=ComedyGene.BREVITY,
+        variants=[variant("Same", "My fridge says: stop opening me."), variant("Same", "My fridge says: keep it closed.")],
+    )
+    assert any("label duplicates" in issue for issue in mutation_issues(request, response))
+
+
+def test_comparison_labels_must_match_variants_once() -> None:
+    variants = [variant("A", "My fridge says: stop opening me."), variant("B", "My fridge says: keep it closed.")]
+    request = CompareRequest(source_text="My smart fridge tells me to stop opening it.", variants=variants)
+    response = ComparisonResponse(
+        observations=[
+            {
+                "label": "A",
+                "mechanism_effect": "Shorter setup.",
+                "uncertainty": "Taste varies.",
+            },
+            {
+                "label": "A",
+                "mechanism_effect": "Different pause.",
+                "uncertainty": "Timing varies.",
+            },
+        ],
+        key_tradeoff="Clarity versus timing.",
+        suggested_human_test="Blind A/B test.",
+        limitations=["Small sample."],
+    )
+
+    assert any("match variant labels" in issue for issue in comparison_issues(request, response))
