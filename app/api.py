@@ -39,7 +39,12 @@ async def index() -> FileResponse:
 
 @app.get("/health")
 async def health() -> dict[str, str]:
-    return {"status": "ok", "model": settings.gemma_model}
+    fallback_count = getattr(pipeline.gateway, "grammar_fallback_count", 0)
+    return {
+        "status": "ok",
+        "model": settings.gemma_model,
+        "structured_format": "json_fallback" if fallback_count else "json_schema",
+    }
 
 
 async def _run(operation):

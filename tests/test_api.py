@@ -18,6 +18,7 @@ async def test_health_endpoint() -> None:
     payload = response.json()
     assert payload["status"] == "ok"
     assert payload["model"]
+    assert payload["structured_format"] in {"json_schema", "json_fallback"}
 
 
 async def test_index_serves_the_ui() -> None:

@@ -1,6 +1,6 @@
 # Runtime benchmark log
 
-Measured locally on 11 July 2026.
+Measured locally on 11 and 14 July 2026.
 
 ## Environment
 
@@ -22,6 +22,9 @@ Measured locally on 11 July 2026.
 | E2B full flow after mutation fixes | Valid `analyze → mutate → compare` result | 45.828 s | Meets the MVP target of a complete flow in under 60 seconds |
 | E2B three-case seed run | 2/3 complete flows passed | 19.700–37.101 s | Brevity and misdirection passed; specificity exposed schema-envelope failures |
 | E2B specificity regression | Structurally valid, semantically unstable | 16.819–20.577 s | Strict gene contract correctly rejects variants that drift into tone or wording |
+| E2B flow after Ollama grammar change | Valid via narrow JSON fallback | 33.762 s | Full Pydantic and semantic validation still passed |
+| E2B one-shot no-genome baseline | Valid structured mutation | 5.792 s | Faster, but lacks analysis, invariants, feedback, and comparison |
+| 12B teacher audit, one paired brevity case | Pipeline 2/2; baseline 1/2 variants passed | 33.852–36.038 s per candidate | Engineering sanity check only; `n=1` joke |
 
 ## Quality observation
 
@@ -54,5 +57,13 @@ The first three-case seed run completed the `brevity` and `misdirection` example
 7. Promote E2B from interactive candidate to the primary MVP runtime after the successful sub-60-second full flow.
 8. Treat `brevity` and `misdirection` as calibrated demo genes; keep other genes visibly experimental until they pass multi-example human or teacher audit.
 9. Require unique mutation labels and an exact one-to-one mapping between variants and comparison observations so blind A/B choices remain unambiguous.
+
+## 14 July runtime and baseline note
+
+After the local Gemma artifacts were refreshed, Ollama returned `failed to parse grammar` for the full Pydantic schema. The gateway now retries only that specific HTTP 400 in JSON mode; the full schema remains in the prompt and Pydantic validation, structural repair, and semantic gates still run. The fallback is exposed through `/health` rather than hidden.
+
+On one paired therapy-fee brevity case, the E2B HumorGenome pipeline took 33.762 seconds and the one-shot no-genome baseline took 5.792 seconds. Gemma 4 12B's offline rubric accepted both pipeline variants but only one baseline variant; it judged the other baseline edit to be synonym substitution rather than isolated brevity. This 2/2 versus 1/2 result validates the evaluation harness, not a performance claim. A multi-example run and blind human A/B study are still required.
+
+The refreshed runtime also rejected the smart-fridge misdirection flow because both variants reported non-target drift. `misdirection` has therefore moved from calibrated to revalidation status instead of relying on the older successful run.
 
 These are engineering measurements on one machine, not final competition results. The same examples must be rerun on E2B and on the eventual hosted runtime.

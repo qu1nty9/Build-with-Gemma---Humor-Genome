@@ -35,6 +35,7 @@ class OllamaGemmaGateway:
         self.timeout = settings.timeout_seconds
         self.max_output_tokens = settings.max_output_tokens
         self.context_tokens = settings.context_tokens
+        self.grammar_fallback_count = 0
 
     @staticmethod
     def _load_prompt(prompt_name: str) -> str:
@@ -60,6 +61,10 @@ class OllamaGemmaGateway:
         if object_start > 0 and object_end > object_start:
             cleaned = cleaned[object_start : object_end + 1]
         return cleaned
+
+    @staticmethod
+    def _is_grammar_error(response: httpx.Response) -> bool:
+        return response.status_code == 400 and "failed to parse grammar" in response.text.lower()
 
     @classmethod
     def _validate_content(
@@ -103,7 +108,16 @@ class OllamaGemmaGateway:
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 response = await client.post(f"{self.base_url}/api/chat", json=payload)
+                if self._is_grammar_error(response):
+                    fallback_payload = {**payload, "format": "json"}
+                    response = await client.post(f"{self.base_url}/api/chat", json=fallback_payload)
+                    self.grammar_fallback_count += 1
                 response.raise_for_status()
+        except httpx.HTTPStatusError as exc:
+            detail = exc.response.text.strip().replace("\n", " ")[:1000]
+            raise GemmaError(
+                f"Ollama request failed with HTTP {exc.response.status_code}: {detail or 'empty response body'}"
+            ) from exc
         except httpx.HTTPError as exc:
             raise GemmaError(f"Ollama request failed: {exc}") from exc
 

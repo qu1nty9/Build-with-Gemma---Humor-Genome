@@ -1,6 +1,9 @@
 from evaluation.compare_models import mechanism_jaccard, mechanism_names
 from evaluation.run_smoke import load_examples
 from evaluation.summarize_results import controlled_mutation_passes, percentile, render_markdown, summarize
+from evaluation.run_teacher_audit import TeacherAuditResponse, audit_issues
+from evaluation.summarize_teacher_audit import audit_passes, summarize_audits
+from evaluation.validate_dataset import validate_examples
 
 
 def record(*mechanisms: str) -> dict:
@@ -82,3 +85,74 @@ def test_load_examples_can_select_ids(tmp_path) -> None:
     path.write_text('{"id":"a"}\n{"id":"b"}\n', encoding="utf-8")
 
     assert load_examples(path, limit=None, ids=["b"]) == [{"id": "b"}]
+
+
+def test_dataset_validator_accepts_complete_unique_rows(tmp_path) -> None:
+    path = tmp_path / "examples.jsonl"
+    path.write_text(
+        '{"id":"short_joke_001","text":"A sufficiently long original joke.",'
+        '"source":"project-original-ai-assisted","license":"CC0-1.0","split":"seed",'
+        '"calibration_status":"calibrated","target_gene":"brevity",'
+        '"expected_mechanisms":["irony"]}\n',
+        encoding="utf-8",
+    )
+
+    report = validate_examples(path)
+    assert report["status"] == "ok"
+    assert report["examples"] == 1
+
+
+def test_dataset_validator_rejects_duplicate_rows_and_unvalidated_gene(tmp_path) -> None:
+    path = tmp_path / "examples.jsonl"
+    row = (
+        '{"id":"short_joke_001","text":"A sufficiently long original joke.",'
+        '"source":"project-original-ai-assisted","license":"CC0-1.0","split":"seed",'
+        '"calibration_status":"calibrated","target_gene":"specificity",'
+        '"expected_mechanisms":["irony"]}'
+    )
+    path.write_text(f"{row}\n{row}\n", encoding="utf-8")
+
+    report = validate_examples(path, minimum_examples=3)
+    assert report["status"] == "error"
+    assert any("duplicate ids" in error for error in report["errors"])
+    assert any("not a calibrated gene" in error for error in report["errors"])
+    assert any("minimum is 3" in error for error in report["errors"])
+
+
+def teacher_audit(label: str, isolated: bool = True) -> dict:
+    return {
+        "label": label,
+        "target_gene_isolated": isolated,
+        "premise_preserved": True,
+        "non_target_mechanisms_preserved": True,
+        "meaningful_edit": True,
+        "failure_modes": [] if isolated else ["target gene drift"],
+        "rationale": "The requested dimension changed while the premise remained stable.",
+        "confidence": 0.8,
+    }
+
+
+def test_teacher_audit_requires_exact_variant_labels() -> None:
+    response = TeacherAuditResponse(
+        audits=[teacher_audit("A"), teacher_audit("A")],
+        overall_assessment="One duplicate label.",
+        limitations=["Model-based diagnostic."],
+    )
+    assert audit_issues([{"label": "A"}, {"label": "B"}], response)
+
+
+def test_teacher_summary_reports_full_rubric_pass_rate() -> None:
+    records = [
+        {
+            "status": "ok",
+            "target_gene": "brevity",
+            "latency_seconds": 10.0,
+            "audit": {"audits": [teacher_audit("A"), teacher_audit("B", isolated=False)]},
+        }
+    ]
+    summary = summarize_audits(records)
+
+    assert audit_passes(records[0]["audit"]["audits"][0]) is True
+    assert summary["variant_pass_rate"] == 0.5
+    assert summary["target_gene_isolation_rate"] == 0.5
+    assert summary["by_candidate_method"]["unknown"]["pass_rate"] == 0.5

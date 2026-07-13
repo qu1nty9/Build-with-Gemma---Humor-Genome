@@ -1,3 +1,4 @@
+import httpx
 from pydantic import BaseModel
 
 from app.gemma import OllamaGemmaGateway
@@ -11,6 +12,14 @@ def test_extract_json_removes_markdown_fence() -> None:
 def test_extract_json_removes_leading_commentary() -> None:
     content = 'Here is the result:\n{"status": "ok"}\nDone.'
     assert OllamaGemmaGateway._extract_json(content) == '{"status": "ok"}'
+
+
+def test_grammar_error_detection_is_narrow() -> None:
+    grammar_error = httpx.Response(400, text='{"error":"Failed to initialize samplers: failed to parse grammar"}')
+    unrelated_error = httpx.Response(400, text='{"error":"model is missing"}')
+
+    assert OllamaGemmaGateway._is_grammar_error(grammar_error) is True
+    assert OllamaGemmaGateway._is_grammar_error(unrelated_error) is False
 
 
 class EchoEnvelope(BaseModel):
