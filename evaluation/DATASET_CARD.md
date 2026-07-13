@@ -6,7 +6,7 @@
 
 The initial seed release contains 10 English one- or two-sentence jokes:
 
-- 4 calibrated `brevity` cases;
+- 2 pilot-validated `brevity` cases and 2 `brevity` cases under revalidation;
 - 5 `misdirection` cases marked for revalidation after a local runtime update changed structured-output behavior;
 - 1 deliberately experimental `specificity` case retained as a documented failure case.
 

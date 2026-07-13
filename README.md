@@ -66,7 +66,7 @@ curl http://127.0.0.1:8000/health
 
 The web UI deliberately calls `analyze` and `mutate` first. It calls `compare` only after the user makes a blind choice, avoiding unnecessary model latency before human input. `flow` remains available for offline evaluation.
 
-`brevity` is the currently calibrated demo gene. `misdirection` is visibly marked for revalidation after a local runtime-format change; the remaining genes are experimental until they pass the planned multi-example human or teacher audit. Known failures are reported in the benchmark log.
+`brevity` is the best-supported demo gene, currently pilot-validated on 2 of 4 seed records under the full 12B rubric. `misdirection` is visibly marked for revalidation after a local runtime-format change; the remaining genes are experimental until they pass multi-example human or teacher audit. Known failures are reported in the benchmark log.
 
 ## Tests
 

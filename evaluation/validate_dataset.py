@@ -13,7 +13,7 @@ from app.validation import normalized
 
 ALLOWED_LICENSES = {"CC0-1.0", "CC-BY-4.0", "public-domain"}
 CALIBRATED_GENES = {ComedyGene.BREVITY}
-REVALIDATION_GENES = {ComedyGene.MISDIRECTION}
+REVALIDATION_GENES = {ComedyGene.BREVITY, ComedyGene.MISDIRECTION}
 
 
 class EvaluationExample(BaseModel):

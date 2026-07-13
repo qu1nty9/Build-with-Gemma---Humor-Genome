@@ -28,11 +28,12 @@ def summarize_audits(records: list[dict[str, Any]]) -> dict[str, Any]:
     audits = [audit for record in successful for audit in record["audit"]["audits"]]
     latencies = [float(record["latency_seconds"]) for record in successful]
     by_gene: dict[str, list[dict[str, Any]]] = defaultdict(list)
-    by_method: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    by_method_records: dict[str, list[dict[str, Any]]] = defaultdict(list)
+    for record in records:
+        by_method_records[str(record.get("candidate_method", "unknown"))].append(record)
     for record in successful:
         record_audits = record["audit"]["audits"]
         by_gene[str(record.get("target_gene", "unknown"))].extend(record_audits)
-        by_method[str(record.get("candidate_method", "unknown"))].extend(record_audits)
 
     def rate(field: str, rows: list[dict[str, Any]]) -> float | None:
         return rounded(sum(row.get(field) is True for row in rows) / len(rows) if rows else None)
@@ -63,13 +64,33 @@ def summarize_audits(records: list[dict[str, Any]]) -> dict[str, Any]:
         },
         "by_candidate_method": {
             method: {
-                "variants": len(rows),
-                "pass_rate": rounded(sum(audit_passes(row) for row in rows) / len(rows)),
+                "records_attempted": len(method_records),
+                "records_audited": len(audited_records := [
+                    record for record in method_records if record.get("status") == "ok"
+                ]),
+                "record_completion_rate": rounded(len(audited_records) / len(method_records)),
+                "records_full_passed": sum(
+                    all(audit_passes(audit) for audit in record["audit"]["audits"])
+                    for record in audited_records
+                ),
+                "record_full_pass_rate": rounded(
+                    sum(
+                        all(audit_passes(audit) for audit in record["audit"]["audits"])
+                        for record in audited_records
+                    )
+                    / len(method_records)
+                ),
+                "variants": len(rows := [
+                    audit for record in audited_records for audit in record["audit"]["audits"]
+                ]),
+                "variant_pass_rate": rounded(
+                    sum(audit_passes(row) for row in rows) / len(rows) if rows else None
+                ),
                 "target_gene_isolation_rate": rate("target_gene_isolated", rows),
                 "premise_preservation_rate": rate("premise_preserved", rows),
                 "mechanism_preservation_rate": rate("non_target_mechanisms_preserved", rows),
             }
-            for method, rows in sorted(by_method.items())
+            for method, method_records in sorted(by_method_records.items())
         },
     }
 
@@ -82,13 +103,14 @@ def render_markdown(summary: dict[str, Any]) -> str:
     lines = [
         "# Gemma teacher audit summary",
         "",
-        "| Candidate method | Variants | Full rubric pass | Gene isolated |",
-        "|---|---:|---:|---:|",
+        "| Candidate method | Records | Completion | Full record pass | Variants | Variant pass |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
     for method, metrics in summary["by_candidate_method"].items():
         lines.append(
-            f"| `{method}` | {metrics['variants']} | {percent(metrics['pass_rate'])} | "
-            f"{percent(metrics['target_gene_isolation_rate'])} |"
+            f"| `{method}` | {metrics['records_audited']}/{metrics['records_attempted']} | "
+            f"{percent(metrics['record_completion_rate'])} | {percent(metrics['record_full_pass_rate'])} | "
+            f"{metrics['variants']} | {percent(metrics['variant_pass_rate'])} |"
         )
     lines.extend(
         [

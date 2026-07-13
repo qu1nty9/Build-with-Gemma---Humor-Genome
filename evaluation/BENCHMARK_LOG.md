@@ -66,4 +66,15 @@ On one paired therapy-fee brevity case, the E2B HumorGenome pipeline took 33.762
 
 The refreshed runtime also rejected the smart-fridge misdirection flow because both variants reported non-target drift. `misdirection` has therefore moved from calibrated to revalidation status instead of relying on the older successful run.
 
+### Four-case brevity calibration
+
+The next fixed slice used four project-original CC0 brevity examples. The HumorGenome pipeline completed 3/4 candidate records; the one-shot baseline completed 4/4. Gemma 4 12B audited every successful mutation using the same isolation/preservation rubric:
+
+| Method | Candidate completion | Fully passing records | Passing variants |
+|---|---:|---:|---:|
+| HumorGenome pipeline | 3/4 (75%) | 2/4 (50%) | 5/6 (83.3%) |
+| One-shot no-genome baseline | 4/4 (100%) | 1/4 (25%) | 4/8 (50%) |
+
+The pipeline failure was the navigation-anxiety example, where one attempted brevity edit had the same word count as the source after retry. The teacher also rejected one of two meeting pipeline variants as a structural rewrite rather than isolated compression. These results show a quality/completion trade-off, not statistical superiority: there are only four source jokes, the 12B rubric is model-based, and blind human preference has not yet been collected.
+
 These are engineering measurements on one machine, not final competition results. The same examples must be rerun on E2B and on the eventual hosted runtime.

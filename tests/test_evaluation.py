@@ -155,4 +155,5 @@ def test_teacher_summary_reports_full_rubric_pass_rate() -> None:
     assert audit_passes(records[0]["audit"]["audits"][0]) is True
     assert summary["variant_pass_rate"] == 0.5
     assert summary["target_gene_isolation_rate"] == 0.5
-    assert summary["by_candidate_method"]["unknown"]["pass_rate"] == 0.5
+    assert summary["by_candidate_method"]["unknown"]["variant_pass_rate"] == 0.5
+    assert summary["by_candidate_method"]["unknown"]["record_completion_rate"] == 1.0

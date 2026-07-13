@@ -1,6 +1,6 @@
 # Evaluation
 
-`examples.jsonl` contains 10 project-original, AI-assisted CC0 seed jokes and the comedy gene selected for controlled editing. Four `brevity` rows are calibrated, five `misdirection` rows are under revalidation after a runtime-format change, and one `specificity` row is retained as an explicit failure case. See [`DATASET_CARD.md`](DATASET_CARD.md) for provenance and limitations. The set must still grow to 30–50 licensed examples before final evaluation.
+`examples.jsonl` contains 10 project-original, AI-assisted CC0 seed jokes and the comedy gene selected for controlled editing. Two `brevity` rows are pilot-validated, two more brevity rows and five `misdirection` rows are under revalidation, and one `specificity` row is retained as an explicit failure case. See [`DATASET_CARD.md`](DATASET_CARD.md) for provenance and limitations. The set must still grow to 30–50 licensed examples before final evaluation.
 
 Validate schema, provenance metadata, uniqueness, license allowlist, and calibration labels before any model run:
 

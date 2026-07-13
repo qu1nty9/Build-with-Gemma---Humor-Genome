@@ -318,6 +318,15 @@ Definition of done: воспроизводимый evaluation run создаёт
 
 Definition of done: есть честная таблица результатов с n, baseline и минимум одним failure case.
 
+### Фактический статус после calibration run 14 июля
+
+- Собран и автоматически валидируется seed-набор из 10 project-original CC0 примеров; цель 30–50 ещё не достигнута.
+- Готовы one-shot no-genome baseline, E2B pipeline runner, offline 12B teacher rubric и Markdown/JSON summaries.
+- На четырёх brevity-кейсах pipeline завершил 3/4 записей и получил 5/6 passing variants по teacher rubric; baseline завершил 4/4, но получил 4/8 passing variants.
+- Полностью прошли rubric 2/4 pipeline records против 1/4 baseline records. Это engineering calibration, не статистическое доказательство.
+- `misdirection` возвращена в revalidation после изменения поведения локального Ollama structured runtime; `specificity` остаётся documented failure.
+- Human blind A/B, held-out split, ablation и финальный prompt freeze ещё не выполнены и являются следующим обязательным рубежом.
+
 ### 16 июля — hardening и deployment
 
 - публичный deployment;
